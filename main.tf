@@ -42,7 +42,7 @@ terraform {
 module "managed_identity" {
   source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=managed_identity/v1.0.0"
 
-  name = "mi-app-user11"
+  name = "protmaks"
   resource_group = {
     name     = "rg-user11"
     location = "northeurope"
@@ -127,7 +127,7 @@ module "app_service_plan" {
 module "container_registry" {
   source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=container_registry/v1.0.0"
 
-  container_registry_name = "cruser11"
+  container_registry_name = "crprotmaks"
   sku                     = "Basic"
   write_access            = []
 
