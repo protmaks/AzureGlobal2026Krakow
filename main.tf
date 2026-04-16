@@ -72,7 +72,7 @@ module "mssql_server" {
   databases = [
     {
       name                 = "razorpagesmoviedb"
-      size                 = "Basic"
+      size                 = 2
       sku                  = "Basic"
       storage_account_type = "Geo"
       collation            = "SQL_Latin1_General_CP1_CI_AS"
@@ -129,7 +129,7 @@ module "container_registry" {
 
   container_registry_name = "cruser11"
   sku                     = "Basic"
-  write_access            = [module.managed_identity.managed_identity_principal_id]
+  write_access            = []
 
   resource_group = {
     name     = "rg-user11"
@@ -142,11 +142,18 @@ module "container_registry" {
   }
 }
 
+# Grant Managed Identity write access to Container Registry
+resource "azurerm_role_assignment" "acr_push" {
+  scope              = module.container_registry.id
+  role_definition_name = "AcrPush"
+  principal_id       = module.managed_identity.managed_identity_principal_id
+}
+
 # ============================================================================
 # Key Vault - Reference existing Key Vault
 # ============================================================================
 data "azurerm_key_vault" "this" {
-  name                = "kv-protmaks"
+  name                = "protmaks"
   resource_group_name = "rg-user11"
 }
 
