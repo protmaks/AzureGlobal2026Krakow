@@ -152,50 +152,62 @@ resource "azurerm_role_assignment" "acr_push" {
 # ============================================================================
 # Key Vault - Secrets management
 # ============================================================================
-module "keyvault" {
-  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=keyvault/v1.0.0"
+resource "azurerm_key_vault" "this" {
+  name                        = "kv-protmaks"
+  location                    = "northeurope"
+  resource_group_name         = "rg-user11"
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  sku_name                    = "standard"
+  enable_rbac_authorization   = true
+  purge_protection_enabled    = true
+  soft_delete_retention_days  = 7
 
-  keyvault_name = "kv-protmaks"
-  resource_group = {
-    name     = "rg-user11"
-    location = "northeurope"
-  }
-
-  network_acls = {
+  network_acls {
     bypass         = "AzureServices"
     default_action = "Deny"
   }
-
-  # Store sensitive secrets in Key Vault
-  secrets = [
-    {
-      name  = "SqlConnectionString"
-      value = "Server=tcp:${module.mssql_server.server.fully_qualified_domain_name},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.server.administrator_login};Password=${random_password.sql_admin.result};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
-    },
-    {
-      name  = "ApplicationInsightsConnectionString"
-      value = module.application_insights.connection_string
-    }
-  ]
-
-  # Grant Managed Identity permission to read secrets
-  permissions = [
-    {
-      principal_id                     = module.managed_identity.managed_identity_principal_id
-      role_definition_name             = "Key Vault Secrets User"
-      skip_service_principal_aad_check = false
-    }
-  ]
 
   tags = {
     environment = "production"
     project     = "razorpages-movie"
   }
+}
+
+# Grant Managed Identity permission to read secrets
+resource "azurerm_role_assignment" "keyvault_secrets_user" {
+  scope              = azurerm_key_vault.this.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id       = module.managed_identity.managed_identity_principal_id
+}
+
+# Store SQL connection string in Key Vault
+resource "azurerm_key_vault_secret" "sql_connection_string" {
+  name            = "SqlConnectionString"
+  value           = "Server=tcp:${module.mssql_server.server.fully_qualified_domain_name},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.server.administrator_login};Password=${random_password.sql_admin.result};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
+  key_vault_id    = azurerm_key_vault.this.id
+  content_type    = "text/plain"
 
   depends_on = [
-    module.mssql_server,
+    azurerm_role_assignment.keyvault_secrets_user,
+    module.mssql_server
+  ]
+}
+
+# Store Application Insights connection string in Key Vault
+resource "azurerm_key_vault_secret" "app_insights_connection_string" {
+  name            = "ApplicationInsightsConnectionString"
+  value           = module.application_insights.connection_string
+  key_vault_id    = azurerm_key_vault.this.id
+  content_type    = "text/plain"
+
+  depends_on = [
+    azurerm_role_assignment.keyvault_secrets_user,
     module.application_insights
   ]
+}
+
+# Get current Azure client config for tenant ID
+data "azurerm_client_config" "current" {
 }
 
 # ============================================================================
@@ -219,8 +231,8 @@ module "app_service" {
     "DOCKER_REGISTRY_SERVER_URL"                = "https://${module.container_registry.login_server}"
     "DOCKER_ENABLE_CI"                          = "true"
     "DOCKER_CUSTOM_IMAGE_NAME"                  = "${module.container_registry.login_server}/razorpages-movie:latest"
-    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${module.keyvault.vault_uri}secrets/ApplicationInsightsConnectionString/)"
-    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${module.keyvault.vault_uri}secrets/SqlConnectionString/)"
+    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.this.vault_uri}secrets/ApplicationInsightsConnectionString/)"
+    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.this.vault_uri}secrets/SqlConnectionString/)"
     "ASPNETCORE_ENVIRONMENT"                    = "Production"
     "ASPNETCORE_URLS"                           = "http://+:8080"
   }
@@ -238,7 +250,8 @@ module "app_service" {
   }
  
   depends_on = [
-    module.keyvault,
+    azurerm_key_vault_secret.sql_connection_string,
+    azurerm_key_vault_secret.app_insights_connection_string,
     module.mssql_server,
     module.application_insights
   ]
