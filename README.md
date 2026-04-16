@@ -234,7 +234,7 @@ Pierwsze X osób które wykonają najszybciej zadania wybierają nagrody z sejfu
     - ENV za pomocą terraform
     - pamiętaj, że jeżeli zmienna jest sekretem możesz wykorzystać Key Vault
 
-# Wskasówki
+# Wskazówki
 - pamiętaj, że Managed Idenitiy z którego będzie korzystała twoja aplikacja musi być do niej przypisane i posiadać odpowiednie role do "komunikacji" z SQL, KV etc
 - sekrety przechowuj w KeyVault
 - ręczne klikanie w portal Azure = tylko do weryfikacji / debug
