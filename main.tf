@@ -207,8 +207,8 @@ module "app_service" {
     "DOCKER_REGISTRY_SERVER_URL"                = "https://${module.container_registry.login_server}"
     "DOCKER_ENABLE_CI"                          = "true"
     "DOCKER_CUSTOM_IMAGE_NAME"                  = "${module.container_registry.login_server}/razorpages-movie:latest"
-    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${module.keyvault.secrets["ApplicationInsightsConnectionString"].id})"
-    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${module.keyvault.secrets["SqlConnectionString"].id})"
+    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${module.keyvault.vault_uri}secrets/ApplicationInsightsConnectionString/)"
+    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${module.keyvault.vault_uri}secrets/SqlConnectionString/)"
     "ASPNETCORE_ENVIRONMENT"                    = "Production"
     "ASPNETCORE_URLS"                           = "http://+:8080"
   }
