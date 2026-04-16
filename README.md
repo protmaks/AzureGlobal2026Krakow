@@ -187,3 +187,50 @@ jobs:
             --docker-custom-image-name ${{ secrets.ACR_LOGIN_SERVER }}/example-webapp:latest \
             --docker-registry-server-url https://${{ secrets.ACR_LOGIN_SERVER }}
 ```
+
+# Linki
+https://dev.azure.com/globalazure2026krk/
+https://portal.azure.com/
+https://github.com/pchylak/global_azure_2026_ccoe
+
+# Nagrody
+
+Kto wykona wszystkie zadania bierze udział w losowaniu nagrody główniej
+Pierwsze X osób które wykonają zadania pierwsze wybiera nagrody z sejfu
+
+# Zadania
+
+- Wstęp Teoretyczny
+- Architecture Overview (WSTAWIC ZDJECIE ARCHITEKTURY)
+- Zaloguj się do Azure portal
+    - znajdź swoją resource group
+- Zaimportuj twoją resource group (userX) do terraform (1 pkt)
+- Zrób Connection dla twojej resource groupy (pomiędzy GitHub a Azurem) (1 pkt)
+- Stwórz GitHub Action pod deployment Terraforma (Terraform INIT + PLAN + APPLY) (1 pkt)
+    - możesz wykorzystać TerraformTaskV4@4
+    - skonfiguruj backend/config dla terraforma
+- Zrób Deploy zasobów zgodnie z architekturą:
+    - skorzystaj z modułów https://github.com/pchylak/global_azure_2026_ccoe
+    - instrukcja skorzystania z modułów jest w sekji wiki
+    - zasoby do powołania:
+        - Managed Identity (1 pkt)
+        - Key Vault (1 pkt)
+        - MS SQL (1 pkt)
+        - Application Insights (1 pkt)
+        - App Service Plan (b1) (1 pkt)
+        - Azure App Service (1 pkt)
+        - Azure Container Registry (1 pkt)
+- Zamontuj Pipeline pod deployment aplikacji
+    - Docker Build (1 pkt)
+    - Docker Push to ACR (Azure Container Registry) (1 pkt)
+- Rozszerz pipeline o deploy na powołany Azure App Service (1 pkt)
+    - możesz użyć do tego AzureWebAppContainer@1
+- Uzupełnij zmienne środowiskowe dla aplikacji aby wyświetlała pełnie funkcjonalności (1 pkt)
+    - ENV za pomocą terraform
+    - pamiętaj, że jeżeli zmienna jest sekretem możesz wykorzystać Key Vault
+
+# Wskasówki
+- pamiętaj, że Managed Idenitiy z którego będzie korzystała twoja aplikacja musi być do niej przypisane i posiadać odpowiednie role do "komunikacji" z SQL, KV etc
+- sekrety przechowuj w KeyVault
+- ręczne klikanie w portal Azure = tylko do weryfikacji / debug
+- infrastruktura powinna być odtwarzalna z kodu
