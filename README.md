@@ -1,5 +1,5 @@
 # Azure Global 2025 Krakow Workshop
-Materials for workshop that happend 08.05.2025 in Krakow under Global Azure 2025 by [Dominik Skowron](https://www.linkedin.com/in/dominikskowron007/) & [Damian Maczuga](https://www.linkedin.com/in/damianmaczuga/) & [Paweł Chylak](https://www.linkedin.com/in/pawel-chylak/)
+Materials for workshop that happend 16.04.2026 in Krakow under Global Azure 2026 by [Dominik Skowron](https://www.linkedin.com/in/dominikskowron007/) & [Damian Maczuga](https://www.linkedin.com/in/damianmaczuga/) & [Paweł Chylak](https://www.linkedin.com/in/pawel-chylak/)
 
 ![logo](./logo.png)
 Participants learned how to set up a fully automated, secure CI/CD pipeline for deploying a Flask web application to Azure using **GitHub Actions** and **passwordless authentication via Federated Identity**.
@@ -13,7 +13,6 @@ Participants learned how to set up a fully automated, secure CI/CD pipeline for 
   - Terraform Modules
 - Configuring GitHub Secrets for secure integration
 - Writing and deploying:
-  - `Dockerfile`
   - `main.tf` (Terraform configuration)
   - GitHub Actions workflow (`deploy.yml`)
 - **Passwordless authentication using OIDC federation** between GitHub and Azure
