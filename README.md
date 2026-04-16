@@ -18,7 +18,7 @@ Participants learned how to set up a fully automated, secure CI/CD pipeline for 
 - **Passwordless authentication using OIDC federation** between GitHub and Azure
 - Secure infrastructure and app deployment using Infrastructure as Code (IaC)
 
-This workshop showcased best practices for modern DevOps workflows with **Terraform Modules**, **containerization**, and **secure CI/CD pipelines** on Azure.
+This workshop showcased best practices for modern DevOps workflows with **Terraform Modules**, **containerization**, and **secure CI/CD pipelines** on Azure
 
 # Instruction
 ## 1. Create Free GitHub Account
