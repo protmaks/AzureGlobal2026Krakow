@@ -4,11 +4,10 @@ permissions:
   id-token: write
   contents: read
 
-# uncomment here
-#on:
-#  push:
-#    branches:
-#      - main
+on:
+  push:
+    branches:
+      - main
   
 jobs:
   deploy-infra:
