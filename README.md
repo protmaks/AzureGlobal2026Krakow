@@ -201,7 +201,9 @@ Pierwsze X osób które wykonają zadania pierwsze wybiera nagrody z sejfu
 # Zadania
 
 - Wstęp Teoretyczny
-- Architecture Overview (WSTAWIC ZDJECIE ARCHITEKTURY)
+- Architecture Overview
+<img width="800" height="533" alt="image" src="https://github.com/user-attachments/assets/4d2f6f47-54af-4271-9b06-ad5a36924a68" />
+
 - Zaloguj się do Azure portal
     - znajdź swoją resource group
 - Zaimportuj twoją resource group (userX) do terraform (1 pkt)
