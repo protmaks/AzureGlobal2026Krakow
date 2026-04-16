@@ -143,11 +143,12 @@ module "container_registry" {
 }
 
 # Grant Managed Identity write access to Container Registry
-resource "azurerm_role_assignment" "acr_push" {
-  scope              = module.container_registry.id
-  role_definition_name = "AcrPush"
-  principal_id       = module.managed_identity.managed_identity_principal_id
-}
+# NOTE: Requires Owner or User Access Administrator role on subscription
+# resource "azurerm_role_assignment" "acr_push" {
+#   scope              = module.container_registry.id
+#   role_definition_name = "AcrPush"
+#   principal_id       = module.managed_identity.managed_identity_principal_id
+# }
 
 # ============================================================================
 # Key Vault - Secrets management
@@ -174,11 +175,12 @@ resource "azurerm_key_vault" "this" {
 }
 
 # Grant Managed Identity permission to read secrets
-resource "azurerm_role_assignment" "keyvault_secrets_user" {
-  scope              = azurerm_key_vault.this.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id       = module.managed_identity.managed_identity_principal_id
-}
+# NOTE: Requires Owner or User Access Administrator role on subscription
+# resource "azurerm_role_assignment" "keyvault_secrets_user" {
+#   scope              = azurerm_key_vault.this.id
+#   role_definition_name = "Key Vault Secrets User"
+#   principal_id       = module.managed_identity.managed_identity_principal_id
+# }
 
 # Store SQL connection string in Key Vault
 resource "azurerm_key_vault_secret" "sql_connection_string" {
@@ -188,7 +190,7 @@ resource "azurerm_key_vault_secret" "sql_connection_string" {
   content_type    = "text/plain"
 
   depends_on = [
-    azurerm_role_assignment.keyvault_secrets_user,
+    azurerm_key_vault.this,
     module.mssql_server
   ]
 }
@@ -201,7 +203,7 @@ resource "azurerm_key_vault_secret" "app_insights_connection_string" {
   content_type    = "text/plain"
 
   depends_on = [
-    azurerm_role_assignment.keyvault_secrets_user,
+    azurerm_key_vault.this,
     module.application_insights
   ]
 }
