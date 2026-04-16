@@ -150,40 +150,50 @@ resource "azurerm_role_assignment" "acr_push" {
 }
 
 # ============================================================================
-# Key Vault - Reference existing Key Vault
+# Key Vault - Secrets management
 # ============================================================================
-data "azurerm_key_vault" "this" {
-  name                = "protmaks"
-  resource_group_name = "rg-user11"
-}
+module "keyvault" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=keyvault/v1.0.0"
 
-# Grant Managed Identity permission to read secrets
-resource "azurerm_role_assignment" "keyvault_secrets_user" {
-  scope              = data.azurerm_key_vault.this.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id       = module.managed_identity.managed_identity_principal_id
-}
+  keyvault_name = "kv-protmaks"
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
 
-# Store SQL connection string in Key Vault
-resource "azurerm_key_vault_secret" "sql_connection_string" {
-  name         = "SqlConnectionString"
-  value        = "Server=tcp:${module.mssql_server.server.fully_qualified_domain_name},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.server.administrator_login};Password=${random_password.sql_admin.result};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
-  key_vault_id = data.azurerm_key_vault.this.id
+  network_acls = {
+    bypass         = "AzureServices"
+    default_action = "Deny"
+  }
 
-  depends_on = [
-    azurerm_role_assignment.keyvault_secrets_user,
-    module.mssql_server
+  # Store sensitive secrets in Key Vault
+  secrets = [
+    {
+      name  = "SqlConnectionString"
+      value = "Server=tcp:${module.mssql_server.server.fully_qualified_domain_name},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.server.administrator_login};Password=${random_password.sql_admin.result};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
+    },
+    {
+      name  = "ApplicationInsightsConnectionString"
+      value = module.application_insights.connection_string
+    }
   ]
-}
 
-# Store Application Insights connection string in Key Vault
-resource "azurerm_key_vault_secret" "app_insights_connection_string" {
-  name         = "ApplicationInsightsConnectionString"
-  value        = module.application_insights.connection_string
-  key_vault_id = data.azurerm_key_vault.this.id
+  # Grant Managed Identity permission to read secrets
+  permissions = [
+    {
+      principal_id                     = module.managed_identity.managed_identity_principal_id
+      role_definition_name             = "Key Vault Secrets User"
+      skip_service_principal_aad_check = false
+    }
+  ]
+
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
 
   depends_on = [
-    azurerm_role_assignment.keyvault_secrets_user,
+    module.mssql_server,
     module.application_insights
   ]
 }
@@ -209,8 +219,8 @@ module "app_service" {
     "DOCKER_REGISTRY_SERVER_URL"                = "https://${module.container_registry.login_server}"
     "DOCKER_ENABLE_CI"                          = "true"
     "DOCKER_CUSTOM_IMAGE_NAME"                  = "${module.container_registry.login_server}/razorpages-movie:latest"
-    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault.this.vault_uri}secrets/ApplicationInsightsConnectionString/)"
-    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault.this.vault_uri}secrets/SqlConnectionString/)"
+    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${module.keyvault.vault_uri}secrets/ApplicationInsightsConnectionString/)"
+    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${module.keyvault.vault_uri}secrets/SqlConnectionString/)"
     "ASPNETCORE_ENVIRONMENT"                    = "Production"
     "ASPNETCORE_URLS"                           = "http://+:8080"
   }
@@ -228,8 +238,7 @@ module "app_service" {
   }
  
   depends_on = [
-    azurerm_key_vault_secret.sql_connection_string,
-    azurerm_key_vault_secret.app_insights_connection_string,
+    module.keyvault,
     module.mssql_server,
     module.application_insights
   ]

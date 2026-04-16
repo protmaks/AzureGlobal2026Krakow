@@ -24,7 +24,7 @@ output "managed_identity_client_id" {
 }
 
 output "keyvault_id" {
-  value       = data.azurerm_key_vault.this.id
+  value       = module.keyvault.vault_id
   description = "Key Vault ID"
 }
 
