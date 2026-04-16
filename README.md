@@ -1,0 +1,1 @@
+# AzureGlobal2026Krakow
