@@ -226,7 +226,7 @@ module "app_service" {
     environment = "production"
     project     = "razorpages-movie"
   }
-
+ 
   depends_on = [
     azurerm_key_vault_secret.sql_connection_string,
     azurerm_key_vault_secret.app_insights_connection_string,
