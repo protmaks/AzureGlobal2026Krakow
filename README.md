@@ -2,7 +2,7 @@
 Materials for workshop that happend 16.04.2026 in Krakow under Global Azure 2026 by [Dominik Skowron](https://www.linkedin.com/in/dominikskowron007/) & [Damian Maczuga](https://www.linkedin.com/in/damianmaczuga/) & [Paweł Chylak](https://www.linkedin.com/in/pawel-chylak/)
 
 ![logo](./logo.png)
-Participants learned how to set up a fully automated, secure CI/CD pipeline for deploying a Flask web application to Azure using **GitHub Actions** and **passwordless authentication via Federated Identity**.
+Participants learned how to set up a fully automated, secure CI/CD pipeline for deploying a web application to Azure using **GitHub Actions** and **passwordless authentication via Federated Identity**.
 
 ## Key Topics Covered
 - Creating and configuring a GitHub repository
@@ -190,13 +190,16 @@ jobs:
 
 # Linki
 https://dev.azure.com/globalazure2026krk/
+
 https://portal.azure.com/
+
 https://github.com/pchylak/global_azure_2026_ccoe
+
 
 # Nagrody
 
-Kto wykona wszystkie zadania bierze udział w losowaniu nagrody główniej
-Pierwsze X osób które wykonają zadania pierwsze wybiera nagrody z sejfu
+Każdy kto wykona wszystkie zadania bierze udział w losowaniu nagrody główniej.
+Pierwsze X osób które wykonają najszybciej zadania wybierają nagrody z sejfu
 
 # Zadania
 
