@@ -42,3 +42,4 @@ jobs:
       - name: Apply Terraform Changes
         shell: 'pwsh'
         run: terraform apply -auto-approve
+        
