@@ -90,7 +90,9 @@ jobs:
           az storage blob lease break `
             --account-name stprotmaks `
             --container-name tfstate `
-            --blob-name terraform.tfstate
+            --blob-name terraform.tfstate `
+            -ErrorAction SilentlyContinue
+          exit 0
 
   update-app-service:
     name: Deploy to App Service
