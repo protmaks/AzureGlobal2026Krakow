@@ -4,14 +4,27 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
+
 provider "azurerm" {
   features {}
   client_id       = var.client_id
   client_secret   = var.client_secret
   tenant_id       = var.tenant_id
   subscription_id = var.subscription_id
+}
+
+provider "random" {}
+
+# Generate SQL admin password for Key Vault
+resource "random_password" "sql_admin" {
+  length  = 36
+  special = true
 }
 
 terraform {
@@ -116,7 +129,7 @@ module "container_registry" {
 
   container_registry_name = "cruser11"
   sku                     = "Basic"
-  write_access            = [module.managed_identity.principal_id]
+  write_access            = [module.managed_identity.managed_identity_principal_id]
 
   resource_group = {
     name     = "rg-user11"
@@ -150,7 +163,7 @@ module "keyvault" {
   secrets = [
     {
       name  = "SqlConnectionString"
-      value = "Server=tcp:${module.mssql_server.sql_server_fqdn},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.sql_server_admin_username};Password=${module.mssql_server.sql_server_admin_password};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
+      value = "Server=tcp:${module.mssql_server.server.fully_qualified_domain_name},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.server.administrator_login};Password=${random_password.sql_admin.result};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
     },
     {
       name  = "ApplicationInsightsConnectionString"
@@ -161,7 +174,7 @@ module "keyvault" {
   # Grant Managed Identity permission to read secrets
   permissions = [
     {
-      principal_id                     = module.managed_identity.principal_id
+      principal_id                     = module.managed_identity.managed_identity_principal_id
       role_definition_name             = "Key Vault Secrets User"
       skip_service_principal_aad_check = false
     }
@@ -180,9 +193,9 @@ module "app_service" {
   source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=app_service/v1.0.0"
 
   app_service_name    = "app-razorpages-user11"
-  app_service_plan_id = module.app_service_plan.id
-  identity_id         = module.managed_identity.id
-  identity_client_id  = module.managed_identity.client_id
+  app_service_plan_id = module.app_service_plan.app_service_plan.id
+  identity_id         = module.managed_identity.managed_identity_id
+  identity_client_id  = module.managed_identity.managed_identity_client_id
 
   resource_group = {
     name     = "rg-user11"

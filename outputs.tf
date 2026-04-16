@@ -1,5 +1,5 @@
 output "app_service_name" {
-  value       = module.app_service.app_service_name
+  value       = module.app_service.webapp.name
   description = "Name of the App Service"
 }
 
@@ -14,22 +14,22 @@ output "container_registry_login_server" {
 }
 
 output "container_registry_name" {
-  value       = module.container_registry.registry_name
+  value       = module.container_registry.name
   description = "Container Registry name"
 }
 
 output "managed_identity_client_id" {
-  value       = module.managed_identity.client_id
+  value       = module.managed_identity.managed_identity_client_id
   description = "Managed Identity client ID"
 }
 
 output "keyvault_id" {
-  value       = module.keyvault.id
+  value       = module.keyvault.vault_id
   description = "Key Vault ID"
 }
 
 output "sql_server_fqdn" {
-  value       = module.mssql_server.sql_server_fqdn
+  value       = module.mssql_server.server.fully_qualified_domain_name
   description = "SQL Server FQDN"
 }
 
