@@ -13,10 +13,6 @@ provider "azurerm" {
   tenant_id       = var.tenant_id
   subscription_id = var.subscription_id
 }
-variable "client_id" {}
-variable "client_secret" {}
-variable "tenant_id" {}
-variable "subscription_id" {}
 
 terraform {
   backend "azurerm" {
@@ -27,16 +23,199 @@ terraform {
   }
 }
 
-module "keyvault" {
-  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=keyvault/v1.0.0"
-  keyvault_name = "protmaks"
+# ============================================================================
+# Managed Identity - for app service to access Key Vault, SQL, ACR
+# ============================================================================
+module "managed_identity" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=managed_identity/v1.0.0"
+
+  name = "mi-app-user11"
   resource_group = {
     name     = "rg-user11"
     location = "northeurope"
   }
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
+}
+
+# ============================================================================
+# SQL Server - Database for application data
+# ============================================================================
+module "mssql_server" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=mssql_server/v1.0.0"
+
+  sql_server_name       = "sqlserver-user11"
+  sql_server_admin      = "azureuser"
+  sql_server_version    = "12.0"
+  public_network_access = true
+
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
+
+  databases = [
+    {
+      name                 = "razorpagesmoviedb"
+      size                 = "Basic"
+      sku                  = "Basic"
+      storage_account_type = "Geo"
+      collation            = "SQL_Latin1_General_CP1_CI_AS"
+    }
+  ]
+}
+
+# ============================================================================
+# Application Insights - Monitoring and diagnostics
+# ============================================================================
+module "application_insights" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=application_insights/v1.0.0"
+
+  log_analytics_name        = "la-user11"
+  application_insights_name = "ai-user11"
+  retention_in_days         = 30
+
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
+
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
+}
+
+# ============================================================================
+# App Service Plan - Compute for the web app (B1 Basic tier)
+# ============================================================================
+module "app_service_plan" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=service_plan/v1.0.0"
+
+  app_service_plan_name = "asp-user11"
+  sku_name              = "B1"
+
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
+
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
+}
+
+# ============================================================================
+# Container Registry - For Docker image storage
+# ============================================================================
+module "container_registry" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=container_registry/v1.0.0"
+
+  container_registry_name = "cruser11"
+  sku                     = "Basic"
+  write_access            = [module.managed_identity.principal_id]
+
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
+
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
+}
+
+# ============================================================================
+# Key Vault - Secrets management
+# ============================================================================
+module "keyvault" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=keyvault/v1.0.0"
+
+  keyvault_name = "kv-protmaks"
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
+
   network_acls = {
-    bypass = "AzureServices"
+    bypass         = "AzureServices"
     default_action = "Deny"
   }
+
+  # Store sensitive secrets in Key Vault
+  secrets = [
+    {
+      name  = "SqlConnectionString"
+      value = "Server=tcp:${module.mssql_server.sql_server_fqdn},1433;Initial Catalog=razorpagesmoviedb;Persist Security Info=False;User ID=${module.mssql_server.sql_server_admin_username};Password=${module.mssql_server.sql_server_admin_password};MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;"
+    },
+    {
+      name  = "ApplicationInsightsConnectionString"
+      value = module.application_insights.connection_string
+    }
+  ]
+
+  # Grant Managed Identity permission to read secrets
+  permissions = [
+    {
+      principal_id                     = module.managed_identity.principal_id
+      role_definition_name             = "Key Vault Secrets User"
+      skip_service_principal_aad_check = false
+    }
+  ]
+
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
+}
+
+# ============================================================================
+# App Service - Web application
+# ============================================================================
+module "app_service" {
+  source = "git::https://github.com/pchylak/global_azure_2026_ccoe.git?ref=app_service/v1.0.0"
+
+  app_service_name    = "app-razorpages-user11"
+  app_service_plan_id = module.app_service_plan.id
+  identity_id         = module.managed_identity.id
+  identity_client_id  = module.managed_identity.client_id
+
+  resource_group = {
+    name     = "rg-user11"
+    location = "northeurope"
+  }
+
+  app_settings = {
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE"       = "false"
+    "DOCKER_REGISTRY_SERVER_URL"                = "https://${module.container_registry.login_server}"
+    "DOCKER_ENABLE_CI"                          = "true"
+    "DOCKER_CUSTOM_IMAGE_NAME"                  = "${module.container_registry.login_server}/razorpages-movie:latest"
+    "ApplicationInsights__ConnectionString"     = "@Microsoft.KeyVault(SecretUri=${module.keyvault.secrets["ApplicationInsightsConnectionString"].id})"
+    "ConnectionStrings__RazorPagesMovieContext" = "@Microsoft.KeyVault(SecretUri=${module.keyvault.secrets["SqlConnectionString"].id})"
+    "ASPNETCORE_ENVIRONMENT"                    = "Production"
+    "ASPNETCORE_URLS"                           = "http://+:8080"
+  }
+
+  health_check_path                 = "/status"
+  health_check_eviction_time_in_min = 5
+  ftps                              = "Disabled"
+  always_on                         = true
+  https_only                        = true
+  http2_enabled                     = true
+
+  tags = {
+    environment = "production"
+    project     = "razorpages-movie"
+  }
+
+  depends_on = [
+    module.keyvault,
+    module.mssql_server,
+    module.application_insights
+  ]
 }
 
