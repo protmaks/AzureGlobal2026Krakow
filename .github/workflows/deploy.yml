@@ -75,6 +75,17 @@ jobs:
         shell: pwsh
         run: terraform apply -auto-approve
 
+      - name: Unlock Terraform State on Failure
+        if: failure()
+        shell: pwsh
+        run: |
+          az storage blob update `
+            --account-name stprotmaks `
+            --container-name tfstate `
+            --name terraform.tfstate `
+            --lease-action break `
+            --auth-mode login
+
   update-app-service:
     name: Deploy to App Service
     runs-on: ubuntu-latest
