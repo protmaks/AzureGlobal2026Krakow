@@ -1,4 +1,4 @@
-# Azure Global 2025 Krakow Workshop
+# Azure Global 2026 Krakow Workshop
 Materials for workshop that happend 16.04.2026 in Krakow under Global Azure 2026 by [Dominik Skowron](https://www.linkedin.com/in/dominikskowron007/) & [Damian Maczuga](https://www.linkedin.com/in/damianmaczuga/) & [Paweł Chylak](https://www.linkedin.com/in/pawel-chylak/)
 
 ![logo](./logo.png)
