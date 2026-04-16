@@ -52,7 +52,11 @@ jobs:
             "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}",
             "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}",
             "ARM_USE_OIDC=true",
-            "ARM_USE_AZUREAD=true") | Out-File -FilePath $env:GITHUB_ENV -Append
+            "ARM_USE_AZUREAD=true",
+            "TF_VAR_client_id=${{ secrets.AZURE_CLIENT_ID }}",
+            "TF_VAR_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}",
+            "TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}",
+            "TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}") | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
